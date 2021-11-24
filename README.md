@@ -1,2 +1,2 @@
-# yandex.music-spotify-migrator-bot
-Migrate your Yandex Music playlist to Spotify.
+# Yandex Music -> Spotify
+Перенос плейлистов Yandex Music в Spotify.
