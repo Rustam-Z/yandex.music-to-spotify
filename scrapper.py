@@ -22,7 +22,7 @@ from threading import Thread
 class Scrapper:
     user_id = "314vqpqyrdpvs5uyer22bbusxcoq"
     counter = 0
-    token = "BQAQd8ZpA5U99HkEZhmiG_UpWVK9DkXJMINIUj5VVrJsx97kmy1JAmvz7ck0jEtw9TXUFA460blPxtmAqgm-IE8rEJjYcOZET3mP82WfWNijIblkSc-1R4OFXFiovmStjIO0ygc7Fc_UfFVUDVT9N5Vir9qGck2o8jdgCmMTH-sNvPiJVbvzqtlExBvbM4FRkP_xAl-p2IRFXw4P_sHmAcRXWw5oRHRS"
+    token = "BQACxRP4AtgWSDj0Dpn0gAcUG0adiOEm5HeDKWrn2NJGBeqidBJXEuh76UK64ChtFwUYbf4mJdSYt4vkCnGne3DyK6x19CBx4AemAZ-EIhJw1HhstcsSjvtCjtq_1Glil7kgu5eGisPXLDSOGBG3KNPuQIkJBrOfMW4TGDq1jVxVt7xOqohP9qbROXy1mpFHWf8w2k_v2WI8UIqS62PZeAuVrlc352Ne"
     number_of_songs = 0
     uris = []
 
@@ -112,8 +112,10 @@ class Scrapper:
 
 
 if __name__ == '__main__':
+    playlist_url_big = "https://music.yandex.com/users/asadbek1khasanov@gmail.com/playlists/3"
     playlist_url = "https://music.yandex.com/users/asadbek1khasanov@gmail.com/playlists/1001"
-    scrapper = Scrapper(playlist_url)
+
+    scrapper = Scrapper(playlist_url_big)
     scrapper.get_playlist_songs()
     scrapper.get_songs_uri()
     scrapper.add_tracks_to_playlist()
