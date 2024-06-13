@@ -25,14 +25,15 @@ class HttpClient:
         self.base_url = base_url
         self.session = requests.Session()
 
-    def make_request(self, method: str, url: str, headers: dict = None, data: str = None) -> Munch:
-        response = self.session.request(method, url, headers=headers, data=data)
+    def make_request(self, method: str, url: str, headers: dict = None, data: str = None, **kwargs) -> Munch:
+        response = self.session.request(method, url, headers=headers, data=data, **kwargs)
+        data = response.json() if 'application/json' in response.headers.get('content-type') else response.text
 
         return Munch(
             url=url,
             status_code=response.status_code,
             reason=response.reason,
-            data=response.json() if response.headers.get('Content-Type') == 'application/json' else response.text,
+            data=data,
         )
 
     def update_headers(self, headers: dict) -> None:
