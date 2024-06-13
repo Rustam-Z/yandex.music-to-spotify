@@ -98,9 +98,10 @@ if __name__ == "__main__":
     _url = "https://music.yandex.ru/users/zokirovrustam202/playlists/3"
     _driver = webdriver.Chrome()
 
-    _scraper = YandexMusicClient(_driver, _url)
-    _tracks = _scraper.get_tracks_and_artists()
-    print(_tracks)
-    print(len(_tracks))
-
-    _driver.quit()
+    try:
+        _scraper = YandexMusicClient(_driver, _url)
+        _tracks = _scraper.get_tracks_and_artists()
+        print(_tracks)
+        print(len(_tracks))
+    finally:
+        _driver.quit()

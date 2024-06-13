@@ -1,15 +1,12 @@
-import csv
 import json
 import os
-from typing import Optional
 
 import requests
 from decouple import config
 
+from config import SPOTIFY_AUTH_API_HOST, SPOTIFY_API_HOST
 from helpers import HttpClient
-
-SPOTIFY_API_HOST = "https://api.spotify.com/v1"
-SPOTIFY_AUTH_API_HOST = "https://accounts.spotify.com/api/token"
+from logger import logger
 
 
 class SpotifyAPI:
@@ -91,16 +88,32 @@ class SpotifyClient:
         self.user_id = self.get_user_id()
 
     def get_user_id(self):
-        response = self.api.get_user_id()
-        return response.data.get("id")
+        try:
+            response = self.api.get_user_id()
+            return response.data.get("id")
+        except Exception as e:
+            logger.error(f"Error occurred while fetching user ID: {e}")
 
     def create_playlist(self):
-        response = self.api.create_playlist(user_id=self.user_id)
-        return response.data.get("id")
+        try:
+            response = self.api.create_playlist(user_id=self.user_id)
+            return response.data.get("id")
+        except Exception as e:
+            logger.error(f"Error occurred while creating playlist: {e}")
 
     def get_track_uri(self, track: str, artist: str):
-        response = self.api.search_track(track=track, artist=artist)
-        return response.data.get("tracks").get("items")[0].get("uri")
+        try:
+            response = self.api.search_track(track=track, artist=artist)
+            return response.data.get("tracks").get("items")[0].get("uri")
+        except Exception as e:
+            logger.error(f"Error occurred while searching track: {track}, {e}")
+
+    def add_tracks_to_playlist(self, playlist_id: str, uris: list):
+        try:
+            response = self.api.add_tracks_to_playlist(playlist_id=playlist_id, uris=uris)
+            return response
+        except Exception as e:
+            logger.error(f"Error occurred while adding tracks to playlist: {uris}, {e}")
 
 
 if __name__ == "__main__":
