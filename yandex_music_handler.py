@@ -12,7 +12,7 @@ class BasePage:
         self.driver.get(url)
 
 
-class YandexMusicScraper(BasePage):
+class YandexMusicHandler(BasePage):
     def __init__(self, driver, url):
         super().__init__(driver)
         self.url = url
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     _url = "https://music.yandex.ru/users/zokirovrustam202/playlists/3"
     _driver = webdriver.Chrome()
 
-    _scraper = YandexMusicScraper(_driver, _url)
+    _scraper = YandexMusicHandler(_driver, _url)
     _scraper.scrape()
     _scraper.print_results()
 
