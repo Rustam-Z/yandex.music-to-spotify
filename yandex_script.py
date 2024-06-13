@@ -37,7 +37,7 @@ class YandexMusicScraper(BasePage):
         """
         Scrape the musics list using scrolling and get the tracks and artists.
         """
-        self.open_page()
+        self.open_page(self.url)
         self.close_promo_banner()
 
         scroll_pause_time = 0.1
