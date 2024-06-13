@@ -16,26 +16,34 @@ class YandexMusicHandler(BasePage):
     def __init__(self, driver, url):
         super().__init__(driver)
         self.url = url
-        self.tracks_and_artists = set()
 
-    def scrape(self):
+    def get_tracks_and_artists(self) -> set[tuple]:
         """
-        Get ALL the tracks and artists list using scrolling.
+        Get the tracks and artists list from the page.
         """
         self.open_page(self.url)
         self._close_promo_banner()
+        tracks = self._parse_tracks_and_artists_with_scroll()
+        return tracks
 
+    def _parse_tracks_and_artists_with_scroll(self) -> set:
+        """
+        Get ALL the tracks and artists list using scrolling.
+        """
         scroll_pause_time = 0.1
         scroll_amount = 1000
         current_scroll_position = 0
 
+        tracks_and_artists = set()
         while current_scroll_position <= self.driver.execute_script("return document.body.scrollHeight"):
             self.driver.execute_script(f"window.scrollTo(0, {current_scroll_position});")
             current_scroll_position += scroll_amount
             time.sleep(scroll_pause_time)
 
             current_data = self._parse_tracks_and_artists()
-            self.tracks_and_artists.update(current_data)
+            tracks_and_artists.update(current_data)
+
+        return tracks_and_artists
 
     def _close_promo_banner(self):
         try:
@@ -62,8 +70,8 @@ if __name__ == "__main__":
     _driver = webdriver.Chrome()
 
     _scraper = YandexMusicHandler(_driver, _url)
-    _scraper.scrape()
-    print(_scraper.tracks_and_artists)
-    print(len(_scraper.tracks_and_artists))
+    tracks = _scraper.get_tracks_and_artists()
+    print(tracks)
+    print(len(tracks))
 
     _driver.quit()
