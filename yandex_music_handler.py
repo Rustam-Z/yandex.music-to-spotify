@@ -1,18 +1,35 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException
 import time
 
+from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
 
-class BasePage:
-    def __init__(self, driver):
-        self.driver = driver
-
-    def open_page(self, url):
-        self.driver.get(url)
+from helpers import BasePage
+from logger import logger
 
 
 class YandexMusicHandler(BasePage):
+    """
+    Example usage:
+        _url = "https://music.yandex.ru/users/zokirovrustam202/playlists/3"
+        _driver = webdriver.Chrome()
+
+        _scraper = YandexMusicHandler(_driver, _url)
+        tracks = _scraper.get_tracks_and_artists()
+        print(tracks)
+        print(len(tracks))
+
+        _driver.quit()
+    """
+    locators = {
+        "close_button": (By.CLASS_NAME, "pay-promo-close-btn"),
+        "track_name": (By.CLASS_NAME, "d-track__name"),
+        "track_artist": (By.CLASS_NAME, "d-track__artists"),
+        "playlist_image": (By.CLASS_NAME, "playlist-cover__img"),
+    }
+
     def __init__(self, driver, url):
         super().__init__(driver)
         self.url = url
@@ -47,22 +64,34 @@ class YandexMusicHandler(BasePage):
 
     def _close_promo_banner(self):
         try:
-            close_button = self.driver.find_element(By.CLASS_NAME, "pay-promo-close-btn")
+            close_button = self.driver.find_element(*self.locators["close_button"])
             close_button.click()
-            time.sleep(2)  # TODO: Replace with wait until content is loaded in next step.
+            self._wait_until_playlist_image_loads()
         except NoSuchElementException:
-            print("Promo banner not found or already closed.")
+            logger.warning("Promo banner not found or already closed.")
 
     def _parse_tracks_and_artists(self):
         """
         Get the tracks and artists from the page in current scroll position.
         To fetch the list of all tracks and artists scrape() function should be used.
         """
-        track_elements = self.driver.find_elements(By.CLASS_NAME, "d-track__name")
-        artist_elements = self.driver.find_elements(By.CLASS_NAME, "d-track__artists")
+        track_elements = self.driver.find_elements(*self.locators["track_name"])
+        artist_elements = self.driver.find_elements(*self.locators["track_artist"])
         tracks = [track.text for track in track_elements]
         artists = [artist.text for artist in artist_elements]
         return set(zip(tracks, artists))
+
+    def _wait_until_playlist_image_loads(self, timeout: int = 10):
+        """
+        Wait until the playlist image is loaded. Use explicit wait.
+        """
+        try:
+            element = WebDriverWait(self.driver, timeout).until(
+                EC.presence_of_element_located(self.locators["playlist_image"])
+            )
+            return element
+        except TimeoutException:
+            logger.warning("Timeout: Playlist image not found.")
 
 
 if __name__ == "__main__":
@@ -70,8 +99,8 @@ if __name__ == "__main__":
     _driver = webdriver.Chrome()
 
     _scraper = YandexMusicHandler(_driver, _url)
-    tracks = _scraper.get_tracks_and_artists()
-    print(tracks)
-    print(len(tracks))
+    _tracks = _scraper.get_tracks_and_artists()
+    print(_tracks)
+    print(len(_tracks))
 
     _driver.quit()
