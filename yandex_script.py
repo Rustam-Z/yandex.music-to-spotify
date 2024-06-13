@@ -4,20 +4,25 @@ from selenium.common.exceptions import NoSuchElementException
 import time
 
 
-class YandexMusicScraper:
-    def __init__(self, url):
-        self.url = url
-        self.driver = webdriver.Chrome()
-        self.tracks_and_artists = set()
+class BasePage:
+    def __init__(self, driver):
+        self.driver = driver
 
-    def open_page(self):
-        self.driver.get(self.url)
+    def open_page(self, url):
+        self.driver.get(url)
+
+
+class YandexMusicScraper(BasePage):
+    def __init__(self, driver, url):
+        super().__init__(driver)
+        self.url = url
+        self.tracks_and_artists = set()
 
     def close_promo_banner(self):
         try:
             close_button = self.driver.find_element(By.CLASS_NAME, "pay-promo-close-btn")
             close_button.click()
-            time.sleep(2)
+            time.sleep(2)  # TODO: Replace with wait until content is loaded in next step.
         except NoSuchElementException:
             print("Promo banner not found or already closed.")
 
@@ -29,6 +34,9 @@ class YandexMusicScraper:
         return set(zip(tracks, artists))
 
     def scrape(self):
+        """
+        Scrape the musics list using scrolling and get the tracks and artists.
+        """
         self.open_page()
         self.close_promo_banner()
 
@@ -40,10 +48,9 @@ class YandexMusicScraper:
             self.driver.execute_script(f"window.scrollTo(0, {current_scroll_position});")
             current_scroll_position += scroll_amount
             time.sleep(scroll_pause_time)
+
             current_data = self.get_tracks_and_artists()
             self.tracks_and_artists.update(current_data)
-
-        self.driver.quit()
 
     def print_results(self):
 
@@ -54,7 +61,11 @@ class YandexMusicScraper:
 
 
 if __name__ == "__main__":
-    url = "https://music.yandex.ru/users/zokirovrustam202/playlists/3"
-    scraper = YandexMusicScraper(url)
-    scraper.scrape()
-    scraper.print_results()
+    _url = "https://music.yandex.ru/users/zokirovrustam202/playlists/3"
+    _driver = webdriver.Chrome()
+
+    _scraper = YandexMusicScraper(_driver, _url)
+    _scraper.scrape()
+    _scraper.print_results()
+
+    _driver.quit()
