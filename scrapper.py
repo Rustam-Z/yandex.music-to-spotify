@@ -1,9 +1,9 @@
 from selenium import webdriver
 
 from config import SPOTIFY_API_HOST, SPOTIFY_TOKEN
-from logger import logger
+from utils.logger import logger
 from spotify_handler import SpotifyAPI, SpotifyClient
-from yandex_music_handler import YandexMusicClient, YandexMusicClientHandler
+from yandex_music_handler import YandexMusicClientHandler
 
 
 def main():

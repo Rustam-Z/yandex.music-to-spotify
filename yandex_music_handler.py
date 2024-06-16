@@ -7,8 +7,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
-from helpers import BasePage
-from logger import logger
+from utils.helpers import BasePage
+from utils.logger import logger
 
 
 class YandexMusicClient(BasePage):

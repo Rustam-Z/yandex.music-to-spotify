@@ -5,9 +5,9 @@ import requests
 from decouple import config
 
 from config import SPOTIFY_AUTH_API_HOST, SPOTIFY_API_HOST
-from helpers import HttpClient
-from logger import logger
-from utils import clean_string
+from utils.helpers import HttpClient
+from utils.logger import logger
+from utils.utils import clean_string
 
 
 class SpotifyAPI:
