@@ -1,3 +1,4 @@
+import os
 import time
 
 from selenium import webdriver
@@ -34,21 +35,32 @@ class YandexMusicClient(BasePage):
         super().__init__(driver)
         self.url = url
 
-    def get_tracks_and_artists(self) -> set[tuple]:
+    def get_tracks_and_artists(self, use_cache=False) -> list:
         """
         Get the tracks and artists list from the page.
         """
+
+        if use_cache and os.path.exists(".tracks.csv"):
+            with open(".tracks.csv", "r") as f:
+                return f.read().split("|||")
+
         self.open_page(self.url)
         self._close_promo_banner()
-        tracks = self._parse_tracks_and_artists_with_scroll()
+        tracks = list(self._parse_tracks_and_artists_with_scroll())
+
+        # Save to csv file and use ||| as separator.
+        with open(".tracks.csv", "w") as f:
+            f.write("\n".join(
+                [f"{track.replace('\n', '')} ||| {artist.replace('\n', '')}" for track, artist in tracks])
+            )
+
         return tracks
 
-    def _parse_tracks_and_artists_with_scroll(self) -> set:
+    def _parse_tracks_and_artists_with_scroll(self, scroll_amount: int = 2000) -> set:
         """
         Get ALL the tracks and artists list using scrolling.
         """
         scroll_pause_time = 0.1
-        scroll_amount = 1000
         current_scroll_position = 0
 
         tracks_and_artists = set()
@@ -95,7 +107,7 @@ class YandexMusicClient(BasePage):
 
 
 if __name__ == "__main__":
-    _url = "https://music.yandex.ru/users/zokirovrustam202/playlists/3"
+    _url = "https://music.yandex.ru/users/<PLAYLIST>"
     _driver = webdriver.Chrome()
 
     try:

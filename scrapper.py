@@ -7,7 +7,7 @@ from yandex_music_handler import YandexMusicClient
 
 
 def main():
-    _url = "https://music.yandex.ru/users/zokirovrustam202/playlists/3"
+    _url = "https://music.yandex.ru/users/<PLAYLIST>"
     _driver = webdriver.Chrome()
 
     try:
@@ -16,20 +16,32 @@ def main():
         _spotify_api.authenticate(token=SPOTIFY_TOKEN)
         _spotify_client = SpotifyClient(api=_spotify_api)
 
-        tracks = _yandex_music_client.get_tracks_and_artists()
+        tracks = _yandex_music_client.get_tracks_and_artists(use_cache=True)
         logger.info(f"Number of tracks: {len(tracks)}")
         logger.info(f"Tracks: {tracks}")
 
         spotify_playlist_id = _spotify_client.create_playlist()
         logger.info(f"Spotify playlist ID: {spotify_playlist_id}")
 
-        for track, artist in tracks:
-            track_uri = _spotify_client.get_track_uri(track=track, artist=artist)
+        failed = 0
+        success = 0
+        for track_name, artist in tracks:
+            track_uri = _spotify_client.get_track_uri(track_name=track_name, artist=artist)
+
+            if not track_uri:
+                logger.error(f"NOT FOUND: no tracks found for the query: {track_name} by {artist}")
+                failed += 1
+                continue
+
             _spotify_client.add_tracks_to_playlist(playlist_id=spotify_playlist_id, uris=[track_uri])
-            logger.info(f"Track {track} by {artist} added to Spotify playlist")
+            logger.info(f"SUCCESS: Track {track_name} by {artist} added to Spotify playlist.")
+            success += 1
 
     finally:
         _driver.quit()
+
+    logger.info(f"Total tracks added: {success}")
+    logger.info(f"Total tracks failed: {failed}")
 
 
 if __name__ == "__main__":
