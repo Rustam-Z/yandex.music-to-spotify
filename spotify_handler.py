@@ -101,12 +101,23 @@ class SpotifyClient:
         except Exception as e:
             logger.error(f"Error occurred while creating playlist: {e}")
 
-    def get_track_uri(self, track: str, artist: str):
+    def get_track_uri(self, track_name: str, artist: str):
         try:
-            response = self.api.search_track(track=track, artist=artist)
+            response = self.api.search_track(track=track_name, artist=artist)
+            spotify_track = response.data.get("tracks").get("items")[0]
+
+            if not spotify_track:
+                raise Exception("No tracks found.")
+
+            search_track_name = spotify_track["name"]
+            search_artist = spotify_track["artists"][0]["name"]
+
+            # TODO: check if the tracks are at least similar.
+            
+
             return response.data.get("tracks").get("items")[0].get("uri")
         except Exception as e:
-            logger.error(f"Error occurred while searching track: {track}, {e}")
+            logger.error(f"Error occurred while searching track: {track_name}, {e}")
 
     def add_tracks_to_playlist(self, playlist_id: str, uris: list):
         try:
@@ -120,5 +131,5 @@ if __name__ == "__main__":
     _spotify_api = SpotifyAPI(host=SPOTIFY_API_HOST)
     _spotify_api.authenticate(token=config("SPOTIFY_TOKEN"))
     _spotify_client = SpotifyClient(api=_spotify_api)
-    _track_uri = _spotify_client.get_track_uri(track="Believer", artist="Imagine Dragons")
+    _track_uri = _spotify_client.get_track_uri(track_name="Believer", artist="Imagine Dragons")
     print(_track_uri)
