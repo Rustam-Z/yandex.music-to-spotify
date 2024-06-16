@@ -107,7 +107,7 @@ class YandexMusicClient(BasePage):
 
 
 if __name__ == "__main__":
-    _url = "https://music.yandex.ru/users/zokirovrustam202/playlists/3"
+    _url = "https://music.yandex.ru/users/<PLAYLIST>"
     _driver = webdriver.Chrome()
 
     try:

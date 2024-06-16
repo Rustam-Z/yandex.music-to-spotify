@@ -7,7 +7,7 @@ from yandex_music_handler import YandexMusicClient
 
 
 def main():
-    _url = "https://music.yandex.ru/users/zokirovrustam202/playlists/3"
+    _url = "https://music.yandex.ru/users/<PLAYLIST>"
     _driver = webdriver.Chrome()
 
     try:
