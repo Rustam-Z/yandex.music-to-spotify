@@ -7,6 +7,7 @@ from decouple import config
 from config import SPOTIFY_AUTH_API_HOST, SPOTIFY_API_HOST
 from helpers import HttpClient
 from logger import logger
+from utils import clean_string
 
 
 class SpotifyAPI:
@@ -66,12 +67,12 @@ class SpotifyAPI:
         response = self._http_client.make_request("GET", url)
         return response
 
-    def search_track(self, track: str, artist: str):
+    def search_track(self, track: str, artist: str, limit: int = 1):
         url = self._http_client.build_url("search")
         response = self._http_client.make_request(
             "GET",
             url,
-            params={"q": f"track%3A{track}%2520artist{artist}", "type": "track", "limit": 1}
+            params={"q": f"track%3A{track}%2520artist{artist}", "type": "track", "limit": limit}
         )
         return response
 
@@ -103,33 +104,45 @@ class SpotifyClient:
 
     def get_track_uri(self, track_name: str, artist: str):
         try:
-            response = self.api.search_track(track=track_name, artist=artist)
-            spotify_track = response.data.get("tracks").get("items")[0]
+            response = self.api.search_track(track=track_name, artist=artist, limit=10)
+            spotify_track = self.get_matching_track(response.data.get("tracks"), track_name, artist)
 
             if not spotify_track:
-                raise Exception("No tracks found.")
+                return
 
-            search_track_name = spotify_track["name"]
-            search_artist = spotify_track["artists"][0]["name"]
-
-            # TODO: check if the tracks are at least similar.
-            
-
-            return response.data.get("tracks").get("items")[0].get("uri")
+            return spotify_track.get("uri")
         except Exception as e:
-            logger.error(f"Error occurred while searching track: {track_name}, {e}")
+            logger.error(f"Error occurred while searching track: {e}")
 
     def add_tracks_to_playlist(self, playlist_id: str, uris: list):
         try:
             response = self.api.add_tracks_to_playlist(playlist_id=playlist_id, uris=uris)
             return response
         except Exception as e:
-            logger.error(f"Error occurred while adding tracks to playlist: {uris}, {e}")
+            logger.error(f"Error occurred while adding tracks to playlist: {e}")
+
+    @staticmethod
+    def get_matching_track(tracks: dict, track_name: str, artist: str):
+        for spotify_track in tracks.get("items"):
+            search_track_name = spotify_track["name"]
+            search_artist = spotify_track["artists"][0]["name"]
+
+            normalized_track_name = set(clean_string(track_name).split())
+            normalized_search_track_name = set(clean_string(search_track_name).split())
+            normalized_artist = set(clean_string(artist).split())
+            normalized_search_artist = set(clean_string(search_artist).split())
+
+            if not normalized_track_name.isdisjoint(normalized_search_track_name) and \
+                    not normalized_artist.isdisjoint(normalized_search_artist):
+                return spotify_track
+
+        return None
 
 
 if __name__ == "__main__":
     _spotify_api = SpotifyAPI(host=SPOTIFY_API_HOST)
     _spotify_api.authenticate(token=config("SPOTIFY_TOKEN"))
     _spotify_client = SpotifyClient(api=_spotify_api)
-    _track_uri = _spotify_client.get_track_uri(track_name="Believer", artist="Imagine Dragons")
+    # _track_uri = _spotify_client.get_track_uri(track_name="Believer", artist="Imagine Dragons")
+    _track_uri = _spotify_client.get_track_uri(track_name="Origin", artist="Else")
     print(_track_uri)
