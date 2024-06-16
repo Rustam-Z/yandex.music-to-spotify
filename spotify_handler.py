@@ -21,9 +21,10 @@ class SpotifyAPI:
         self._http_client.remove_all_headers()
         self._http_client.update_headers(self.HTTP_HEADERS)
 
-    def authenticate(self, *, token: str) -> None:
+    def authenticate(self, *, token: str) -> "SpotifyAPI":
         headers = {"Authorization": f"Bearer {token}"}
         self._http_client.update_headers(headers)
+        return self
 
     def get_access_token(self, client_id: str, client_secret: str):
         """
@@ -140,9 +141,7 @@ class SpotifyClient:
 
 
 if __name__ == "__main__":
-    _spotify_api = SpotifyAPI(host=SPOTIFY_API_HOST)
-    _spotify_api.authenticate(token=config("SPOTIFY_TOKEN"))
+    _spotify_api = SpotifyAPI(host=SPOTIFY_API_HOST).authenticate(token=config("SPOTIFY_TOKEN"))
     _spotify_client = SpotifyClient(api=_spotify_api)
-    # _track_uri = _spotify_client.get_track_uri(track_name="Believer", artist="Imagine Dragons")
-    _track_uri = _spotify_client.get_track_uri(track_name="Origin", artist="Else")
+    _track_uri = _spotify_client.get_track_uri(track_name="Believer", artist="Imagine Dragons")
     print(_track_uri)

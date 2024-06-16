@@ -41,8 +41,10 @@ class YandexMusicClient(BasePage):
         """
 
         if use_cache and os.path.exists(".tracks.csv"):
+
             with open(".tracks.csv", "r") as f:
-                return f.read().split("|||")
+                tracks = f.readlines()
+                return [track.split("|||") for track in tracks]
 
         self.open_page(self.url)
         self._close_promo_banner()
@@ -56,7 +58,7 @@ class YandexMusicClient(BasePage):
 
         return tracks
 
-    def _parse_tracks_and_artists_with_scroll(self, scroll_amount: int = 2000) -> set:
+    def _parse_tracks_and_artists_with_scroll(self, scroll_amount: int = 1500) -> set:
         """
         Get ALL the tracks and artists list using scrolling.
         """
@@ -106,14 +108,23 @@ class YandexMusicClient(BasePage):
             logger.warning("Timeout: Playlist image not found.")
 
 
+class YandexMusicClientHandler:
+    def __init__(self, driver, url):
+        self.driver = driver
+        self.url = url
+
+    def __enter__(self):
+        return YandexMusicClient(self.driver, self.url)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.driver.quit()
+
+
 if __name__ == "__main__":
     _url = "https://music.yandex.ru/users/<PLAYLIST>"
     _driver = webdriver.Chrome()
 
-    try:
-        _scraper = YandexMusicClient(_driver, _url)
-        _tracks = _scraper.get_tracks_and_artists()
+    with YandexMusicClientHandler(_driver, _url) as _scraper:
+        _tracks = _scraper.get_tracks_and_artists(use_cache=True)
         print(_tracks)
         print(len(_tracks))
-    finally:
-        _driver.quit()
