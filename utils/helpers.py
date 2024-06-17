@@ -25,9 +25,17 @@ class HttpClient:
         self.base_url = base_url
         self.session = requests.Session()
 
-    def make_request(self, method: str, url: str, headers: dict = None, data: str = None, **kwargs) -> Munch:
-        response = self.session.request(method, url, headers=headers, data=data, **kwargs)
-        data = response.json() if 'application/json' in response.headers.get('content-type') else response.text
+    def make_request(
+        self, method: str, url: str, headers: dict = None, data: str = None, **kwargs
+    ) -> Munch:
+        response = self.session.request(
+            method, url, headers=headers, data=data, **kwargs
+        )
+        data = (
+            response.json()
+            if "application/json" in response.headers.get("content-type")
+            else response.text
+        )
 
         return Munch(
             url=url,
@@ -73,4 +81,3 @@ class HttpClient:
             return f"{host}{path}"
 
         return f"{protocol}://{host}{path}"
-

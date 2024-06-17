@@ -24,6 +24,7 @@ class YandexMusicClient(BasePage):
 
         _driver.quit()
     """
+
     locators = {
         "close_button": (By.CLASS_NAME, "pay-promo-close-btn"),
         "track_name": (By.CLASS_NAME, "d-track__name"),
@@ -41,7 +42,6 @@ class YandexMusicClient(BasePage):
         """
 
         if use_cache and os.path.exists(".tracks.csv"):
-
             with open(".tracks.csv", "r") as f:
                 tracks = f.readlines()
                 return [track.split("|||") for track in tracks]
@@ -52,8 +52,13 @@ class YandexMusicClient(BasePage):
 
         # Save to csv file and use ||| as separator.
         with open(".tracks.csv", "w") as f:
-            f.write("\n".join(
-                [f"{track.replace('\n', '')} ||| {artist.replace('\n', '')}" for track, artist in tracks])
+            f.write(
+                "\n".join(
+                    [
+                        f"{track.replace('\n', '')} ||| {artist.replace('\n', '')}"
+                        for track, artist in tracks
+                    ]
+                )
             )
 
         return tracks
@@ -66,8 +71,12 @@ class YandexMusicClient(BasePage):
         current_scroll_position = 0
 
         tracks_and_artists = set()
-        while current_scroll_position <= self.driver.execute_script("return document.body.scrollHeight"):
-            self.driver.execute_script(f"window.scrollTo(0, {current_scroll_position});")
+        while current_scroll_position <= self.driver.execute_script(
+            "return document.body.scrollHeight"
+        ):
+            self.driver.execute_script(
+                f"window.scrollTo(0, {current_scroll_position});"
+            )
             current_scroll_position += scroll_amount
             time.sleep(scroll_pause_time)
 

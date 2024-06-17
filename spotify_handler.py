@@ -56,10 +56,12 @@ class SpotifyAPI:
 
     def create_playlist(self, user_id: str):
         url = self._http_client.build_url(f"users/{user_id}/playlists")
-        data = json.dumps({
-            "name": f"Playlist #{os.urandom(25).hex()}",
-            "public": True,
-        })
+        data = json.dumps(
+            {
+                "name": f"Playlist #{os.urandom(25).hex()}",
+                "public": True,
+            }
+        )
         response = self._http_client.make_request("POST", url, data=data)
         return response
 
@@ -73,7 +75,11 @@ class SpotifyAPI:
         response = self._http_client.make_request(
             "GET",
             url,
-            params={"q": f"track%3A{track}%2520artist{artist}", "type": "track", "limit": limit}
+            params={
+                "q": f"track: {track} artist:{artist}",
+                "type": "track",
+                "limit": limit,
+            },
         )
         return response
 
@@ -106,7 +112,9 @@ class SpotifyClient:
     def get_track_uri(self, track_name: str, artist: str):
         try:
             response = self.api.search_track(track=track_name, artist=artist, limit=10)
-            spotify_track = self.get_matching_track(response.data.get("tracks"), track_name, artist)
+            spotify_track = self.get_matching_track(
+                response.data.get("tracks"), track_name, artist
+            )
 
             if not spotify_track:
                 return
@@ -117,7 +125,9 @@ class SpotifyClient:
 
     def add_tracks_to_playlist(self, playlist_id: str, uris: list):
         try:
-            response = self.api.add_tracks_to_playlist(playlist_id=playlist_id, uris=uris)
+            response = self.api.add_tracks_to_playlist(
+                playlist_id=playlist_id, uris=uris
+            )
             return response
         except Exception as e:
             logger.error(f"Error occurred while adding tracks to playlist: {e}")
@@ -133,15 +143,20 @@ class SpotifyClient:
             normalized_artist = set(clean_string(artist).split())
             normalized_search_artist = set(clean_string(search_artist).split())
 
-            if not normalized_track_name.isdisjoint(normalized_search_track_name) and \
-                    not normalized_artist.isdisjoint(normalized_search_artist):
+            if not normalized_track_name.isdisjoint(
+                normalized_search_track_name
+            ) and not normalized_artist.isdisjoint(normalized_search_artist):
                 return spotify_track
 
         return None
 
 
 if __name__ == "__main__":
-    _spotify_api = SpotifyAPI(host=SPOTIFY_API_HOST).authenticate(token=config("SPOTIFY_TOKEN"))
+    _spotify_api = SpotifyAPI(host=SPOTIFY_API_HOST).authenticate(
+        token=config("SPOTIFY_TOKEN")
+    )
     _spotify_client = SpotifyClient(api=_spotify_api)
-    _track_uri = _spotify_client.get_track_uri(track_name="Believer", artist="Imagine Dragons")
+    _track_uri = _spotify_client.get_track_uri(
+        track_name="Believer", artist="Imagine Dragons"
+    )
     print(_track_uri)

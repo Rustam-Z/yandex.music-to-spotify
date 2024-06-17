@@ -1,16 +1,25 @@
+import argparse
+
 from selenium import webdriver
 
 from config import SPOTIFY_API_HOST, SPOTIFY_TOKEN
-from utils.logger import logger
 from spotify_handler import SpotifyAPI, SpotifyClient
+from utils.logger import logger
 from yandex_music_handler import YandexMusicClientHandler
 
 
-def main():
-    _url = "https://music.yandex.ru/users/<PLAYLIST>"
-    _driver = webdriver.Chrome()
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Scrape tracks from Yandex Music and add them to a Spotify playlist."
+    )
+    parser.add_argument(
+        "--url", type=str, required=True, help="URL of the Yandex Music playlist"
+    )
+    return parser.parse_args()
 
-    with YandexMusicClientHandler(_driver, _url) as _scraper:
+
+def main(url: str):
+    with YandexMusicClientHandler(webdriver.Chrome(), url) as _scraper:
         tracks = _scraper.get_tracks_and_artists(use_cache=True)
         logger.info(f"Number of tracks: {len(tracks)}")
         logger.info(f"Tracks: {tracks}")
@@ -26,12 +35,18 @@ def main():
         track_uri = _spotify_client.get_track_uri(track_name=track_name, artist=artist)
 
         if not track_uri:
-            logger.error(f"NOT FOUND: no tracks found for the query: {track_name} by {artist}")
+            logger.error(
+                f"NOT FOUND: no tracks found for the query: {track_name} by {artist}"
+            )
             failed += 1
             continue
 
-        _spotify_client.add_tracks_to_playlist(playlist_id=spotify_playlist_id, uris=[track_uri])
-        logger.info(f"SUCCESS: Track {track_name} by {artist} added to Spotify playlist.")
+        _spotify_client.add_tracks_to_playlist(
+            playlist_id=spotify_playlist_id, uris=[track_uri]
+        )
+        logger.info(
+            f"SUCCESS: Track {track_name} by {artist} added to Spotify playlist."
+        )
         success += 1
 
     logger.info(f"Total tracks added: {success}")
@@ -39,4 +54,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    args = parse_args()
+    main(args.url)
