@@ -48,14 +48,14 @@ class YandexMusicClient(BasePage):
 
         self.open_page(self.url)
         self._close_promo_banner()
-        tracks = list(self._parse_tracks_and_artists_with_scroll())
+        tracks = self._parse_tracks_and_artists_with_scroll()
 
         # Save to csv file and use ||| as separator.
         with open(".tracks.csv", "w") as f:
             f.write(
                 "\n".join(
                     [
-                        f"{track.replace('\n', '')} ||| {artist.replace('\n', '')}"
+                        f"{track.replace('\n', '')}|||{artist.replace('\n', '')}"
                         for track, artist in tracks
                     ]
                 )
@@ -63,11 +63,11 @@ class YandexMusicClient(BasePage):
 
         return tracks
 
-    def _parse_tracks_and_artists_with_scroll(self, scroll_amount: int = 1500) -> set:
+    def _parse_tracks_and_artists_with_scroll(self, scroll_amount: int = 1500) -> list:
         """
         Get ALL the tracks and artists list using scrolling.
         """
-        scroll_pause_time = 0.1
+        scroll_pause_time = 0.2
         current_scroll_position = 0
 
         tracks_and_artists = set()
@@ -83,9 +83,9 @@ class YandexMusicClient(BasePage):
             current_data = self._parse_tracks_and_artists()
             tracks_and_artists.update(current_data)
 
-        return tracks_and_artists
+        return list(tracks_and_artists)
 
-    def _close_promo_banner(self):
+    def _close_promo_banner(self) -> None:
         try:
             close_button = self.driver.find_element(*self.locators["close_button"])
             close_button.click()
@@ -93,7 +93,7 @@ class YandexMusicClient(BasePage):
         except NoSuchElementException:
             logger.warning("Promo banner not found or already closed.")
 
-    def _parse_tracks_and_artists(self):
+    def _parse_tracks_and_artists(self) -> set:
         """
         Get the tracks and artists from the page in current scroll position.
         To fetch the list of all tracks and artists scrape() function should be used.
@@ -130,10 +130,10 @@ class YandexMusicClientHandler:
 
 
 if __name__ == "__main__":
-    _url = "https://music.yandex.ru/users/<PLAYLIST>"
+    _url = "https://music.yandex.ru/users/zokirovrustam202/playlists/3"
     _driver = webdriver.Chrome()
 
     with YandexMusicClientHandler(_driver, _url) as _scraper:
-        _tracks = _scraper.get_tracks_and_artists(use_cache=True)
+        _tracks = _scraper.get_tracks_and_artists(use_cache=False)
         print(_tracks)
         print(len(_tracks))

@@ -1,5 +1,5 @@
 import json
-import os
+from datetime import datetime
 
 import requests
 from decouple import config
@@ -54,12 +54,14 @@ class SpotifyAPI:
         response = self._http_client.make_request("GET", url)
         return response
 
-    def create_playlist(self, user_id: str):
+    def create_playlist(self, user_id: str, name: str = None, is_public: bool = True):
         url = self._http_client.build_url(f"users/{user_id}/playlists")
+        # Use current time as name
+        name = name or f"Playlist {datetime.now()}"
         data = json.dumps(
             {
-                "name": f"Playlist #{os.urandom(25).hex()}",
-                "public": True,
+                "name": name,
+                "public": is_public,
             }
         )
         response = self._http_client.make_request("POST", url, data=data)
@@ -70,16 +72,12 @@ class SpotifyAPI:
         response = self._http_client.make_request("GET", url)
         return response
 
-    def search_track(self, track: str, artist: str, limit: int = 1):
+    def search_track(self, query: str, limit: int = 1):
         url = self._http_client.build_url("search")
         response = self._http_client.make_request(
             "GET",
             url,
-            params={
-                "q": f"track: {track} artist:{artist}",
-                "type": "track",
-                "limit": limit,
-            },
+            params={"q": query, "type": "track", "limit": limit},
         )
         return response
 
@@ -109,11 +107,25 @@ class SpotifyClient:
         except Exception as e:
             logger.error(f"Error occurred while creating playlist: {e}")
 
-    def get_track_uri(self, track_name: str, artist: str):
+    def get_track_uri(
+        self,
+        track_name: str,
+        artist: str = None,
+        search_query_type: int = 1,
+    ):
         try:
-            response = self.api.search_track(track=track_name, artist=artist, limit=10)
+            search_query_type_factory = {
+                1: self._query_type1,
+                2: self._query_type2,
+                3: self._query_type3,
+            }
+            query = search_query_type_factory.get(search_query_type)(track_name, artist)
+
+            response = self.api.search_track(query=query, limit=20)
             spotify_track = self.get_matching_track(
-                response.data.get("tracks"), track_name, artist
+                response.data.get("tracks"),
+                track_name,
+                artist,
             )
 
             if not spotify_track:
@@ -133,20 +145,54 @@ class SpotifyClient:
             logger.error(f"Error occurred while adding tracks to playlist: {e}")
 
     @staticmethod
+    def _query_type1(track: str, artist: str = None, *args, **kwargs):
+        """
+        Use it if you want to migrate songs that EXIST on Spotify.
+        """
+        query = f"track%3A{clean_string(track)}"
+
+        if artist:
+            query += f" artist%3A{clean_string(track)}"
+
+        query = query.replace(" ", "%2520")
+        return query
+
+    @staticmethod
+    def _query_type2(track: str, artist: str = None, *args, **kwargs):
+        """
+        Use it if you want to move ALL songs. Some songs may migrate wrongly.
+        """
+        query = f"{clean_string(track)}"
+
+        if artist:
+            query += f" {clean_string(track)}"
+
+        return query
+
+    @staticmethod
+    def _query_type3(track: str, *args, **kwargs):
+        query = f"{clean_string(track)}"
+        return query
+
+    @staticmethod
     def get_matching_track(tracks: dict, track_name: str, artist: str):
         for spotify_track in tracks.get("items"):
             search_track_name = spotify_track["name"]
-            search_artist = spotify_track["artists"][0]["name"]
-
             normalized_track_name = set(clean_string(track_name).split())
             normalized_search_track_name = set(clean_string(search_track_name).split())
-            normalized_artist = set(clean_string(artist).split())
-            normalized_search_artist = set(clean_string(search_artist).split())
 
-            if not normalized_track_name.isdisjoint(
-                normalized_search_track_name
-            ) and not normalized_artist.isdisjoint(normalized_search_artist):
+            if not normalized_track_name.isdisjoint(normalized_search_track_name) and not artist:
                 return spotify_track
+
+            for spotify_artist in spotify_track["artists"]:
+                search_artist = spotify_artist["name"]
+                normalized_artist = set(clean_string(artist).split())
+                normalized_search_artist = set(clean_string(search_artist).split())
+
+                if not normalized_track_name.isdisjoint(
+                    normalized_search_track_name
+                ) and not normalized_artist.isdisjoint(normalized_search_artist):
+                    return spotify_track
 
         return None
 

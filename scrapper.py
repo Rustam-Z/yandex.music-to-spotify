@@ -1,4 +1,5 @@
 import argparse
+import concurrent.futures
 
 from selenium import webdriver
 
@@ -18,6 +19,23 @@ def parse_args():
     return parser.parse_args()
 
 
+def add_track_to_spotify(track, spotify_client, playlist_id):
+    track_name, artist = track
+    track_uri = spotify_client.get_track_uri(
+        track_name=track_name,
+        artist=artist,
+        search_query_type=3
+    )
+
+    if not track_uri:
+        logger.error(f"NOT FOUND: '{track_name}' by '{artist}' not found on Spotify.")
+        return False
+
+    spotify_client.add_tracks_to_playlist(playlist_id=playlist_id, uris=[track_uri])
+    logger.info(f"SUCCESS: '{track_name}' by '{artist}' added to Spotify playlist.")
+    return True
+
+
 def main(url: str):
     with YandexMusicClientHandler(webdriver.Chrome(), url) as _scraper:
         tracks = _scraper.get_tracks_and_artists(use_cache=True)
@@ -29,25 +47,18 @@ def main(url: str):
     spotify_playlist_id = _spotify_client.create_playlist()
     logger.info(f"Spotify playlist ID: {spotify_playlist_id}")
 
-    failed = 0
-    success = 0
-    for track_name, artist in tracks:
-        track_uri = _spotify_client.get_track_uri(track_name=track_name, artist=artist)
-
-        if not track_uri:
-            logger.error(
-                f"NOT FOUND: no tracks found for the query: {track_name} by {artist}"
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        results = list(
+            executor.map(
+                add_track_to_spotify,
+                tracks,
+                [_spotify_client] * len(tracks),
+                [spotify_playlist_id] * len(tracks),
             )
-            failed += 1
-            continue
+        )
 
-        _spotify_client.add_tracks_to_playlist(
-            playlist_id=spotify_playlist_id, uris=[track_uri]
-        )
-        logger.info(
-            f"SUCCESS: Track {track_name} by {artist} added to Spotify playlist."
-        )
-        success += 1
+    success = sum(results)
+    failed = len(results) - success
 
     logger.info(f"Total tracks added: {success}")
     logger.info(f"Total tracks failed: {failed}")
