@@ -8,8 +8,8 @@ Easily move Yandex Music playlist songs to Spotify playlist.
 - Create `.env` file. Copy the content from `.env.example` and update the values.
   - Spotify token: to get it inspect the Spotify page, and get Authorization header in Network Tab, remove "Bearer" word.
 - How to run the script? Put the URL of the Yandex Music playlist in the command below in `--url` parameter.
-  ```
-  python script_name.py --url "https://music.yandex.com/users/<PLAYLIST>"
+  ```shell
+  python3 scrapper.py --url "https://music.yandex.com/users/<PLAYLIST>"
   ```
 
 ## How it works?
