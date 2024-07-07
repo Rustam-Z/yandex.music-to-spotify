@@ -55,7 +55,7 @@ class YandexMusicClient(BasePage):
             f.write(
                 "\n".join(
                     [
-                        f"{track.replace('\n', '')}|||{artist.replace('\n', '')}"
+                        "{}|||{}".format(track.replace('\n', ''), artist.replace('\n', ''))
                         for track, artist in tracks
                     ]
                 )
