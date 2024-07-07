@@ -24,7 +24,7 @@ def add_track_to_spotify(track, spotify_client, playlist_id):
     track_uri = spotify_client.get_track_uri(
         track_name=track_name,
         artist=artist,
-        search_query_type=3
+        search_query_type=2,
     )
 
     if not track_uri:
